@@ -1,1 +1,1 @@
-# Dummy MCP-related project
+# Dummy sandbox with dummy scripts
