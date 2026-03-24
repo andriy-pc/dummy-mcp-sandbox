@@ -270,6 +270,40 @@
           </div>
         </div>
 
+        <!-- 5. Position distribution -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Position distribution</h2>
+            <span class="card-badge card-badge--long">Balance split</span>
+            <button class="help-btn" data-modal="dist-long">?</button>
+          </div>
+          <div class="field-grid field-grid--halves">
+            <div class="field">
+              <label>Account balance ($)</label>
+              <input type="number" id="l-dist-balance" placeholder="e.g. 10000">
+            </div>
+            <div class="field">
+              <label>Amount to keep ($)</label>
+              <input type="number" id="l-dist-reserve" placeholder="e.g. 2000">
+            </div>
+          </div>
+          <button class="btn btn--long" onclick="calcDist('long')">Calculate</button>
+          <div class="results" id="l-dist-results">
+            <div class="metric-row">
+              <div class="metric metric--profit" id="l-dist-spend-card">
+                <div class="metric-label">Can spend</div>
+                <div class="metric-value" id="l-dist-spendable"></div>
+                <div class="metric-sub" id="l-dist-spend-pct"></div>
+              </div>
+              <div class="metric metric--neutral" id="l-dist-reserve-card">
+                <div class="metric-label">Must keep</div>
+                <div class="metric-value" id="l-dist-reserve-out"></div>
+                <div class="metric-sub" id="l-dist-res-pct"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div><!-- /panel-long -->
 
       <!-- ═══════════════════ SHORT PANEL ══════════════════ -->
@@ -497,6 +531,40 @@
               <div class="metric metric--profit"><div class="metric-label">Upper target (+%)</div><div class="metric-value" id="s-pm-upper"></div></div>
               <div class="metric"><div class="metric-label">Entry</div><div class="metric-value" id="s-pm-entry-out"></div></div>
               <div class="metric metric--loss"><div class="metric-label">Lower target (−%)</div><div class="metric-value" id="s-pm-lower"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Position distribution -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Position distribution</h2>
+            <span class="card-badge card-badge--short">Balance split</span>
+            <button class="help-btn" data-modal="dist-short">?</button>
+          </div>
+          <div class="field-grid field-grid--halves">
+            <div class="field">
+              <label>Account balance ($)</label>
+              <input type="number" id="s-dist-balance" placeholder="e.g. 10000">
+            </div>
+            <div class="field">
+              <label>Amount to keep ($)</label>
+              <input type="number" id="s-dist-reserve" placeholder="e.g. 2000">
+            </div>
+          </div>
+          <button class="btn btn--short" onclick="calcDist('short')">Calculate</button>
+          <div class="results" id="s-dist-results">
+            <div class="metric-row">
+              <div class="metric metric--profit" id="s-dist-spend-card">
+                <div class="metric-label">Can spend</div>
+                <div class="metric-value" id="s-dist-spendable"></div>
+                <div class="metric-sub" id="s-dist-spend-pct"></div>
+              </div>
+              <div class="metric metric--neutral" id="s-dist-reserve-card">
+                <div class="metric-label">Must keep</div>
+                <div class="metric-value" id="s-dist-reserve-out"></div>
+                <div class="metric-sub" id="s-dist-res-pct"></div>
+              </div>
             </div>
           </div>
         </div>

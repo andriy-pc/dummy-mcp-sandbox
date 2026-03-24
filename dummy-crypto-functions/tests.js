@@ -88,6 +88,18 @@ function thumbPct(simPrice, min, max) {
   return range > 0 ? ((simPrice - min) / range) * 100 : 50;
 }
 
+function distSpendable(balance, reserve) {
+  return balance - reserve;
+}
+
+function distSpendablePct(spendable, balance) {
+  return Math.round((spendable / balance) * 10000) / 100;
+}
+
+function distReservePct(reserve, balance) {
+  return Math.round((reserve / balance) * 10000) / 100;
+}
+
 /* ─── Test runner ────────────────────────────────────────────────────────── */
 
 let passed = 0;
@@ -293,6 +305,26 @@ test('empty password → true', () => {
 });
 test('both non-empty → false', () => {
   assert.equal(isEmptyCredential('alice', 'secret'), false);
+});
+
+/* ─── Position distribution calculator ──────────────────────────────────── */
+
+suite('distSpendable');
+test('typical: 10000 balance, 2000 reserve → 8000', () => assert.equal(distSpendable(10000, 2000), 8000));
+test('reserve is zero → equals balance',             () => assert.equal(distSpendable(10000, 0), 10000));
+test('scales linearly',                              () => assertClose(distSpendable(20000, 4000), distSpendable(10000, 2000) * 2));
+
+suite('distSpendablePct / distReservePct');
+test('spendable pct + reserve pct = 100 for typical values',          () => assertClose(distSpendablePct(8000, 10000) + distReservePct(2000, 10000), 100));
+test('spendable pct + reserve pct = 100 for edge: reserve = 0',       () => assertClose(distSpendablePct(10000, 10000) + distReservePct(0, 10000), 100));
+test('spendable pct + reserve pct = 100 for edge: reserve = balance - 0.01', () => {
+  const balance = 10000;
+  const reserve = balance - 0.01;
+  assertClose(distSpendablePct(balance - reserve, balance) + distReservePct(reserve, balance), 100, 1e-6);
+});
+test('rounds to two decimal places', () => {
+  assert.equal(distSpendablePct(1, 3), 33.33);
+  assert.equal(distReservePct(2, 3), 66.67);
 });
 
 /* ─── Summary ────────────────────────────────────────────────────────────── */

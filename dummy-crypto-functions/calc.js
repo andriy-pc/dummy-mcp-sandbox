@@ -62,6 +62,14 @@ const HELP_CONTENT = {
   'slider-short': {
     title: 'Live PnL Simulator — Short',
     body:  'Drag the slider to simulate different exit prices within ±20% of your entry. Displays real-time USD PnL, percentage PnL, and a liquidation price marker on the track so you can visualise your risk at a glance.'
+  },
+  'dist-long': {
+    title: 'Position Distribution Calculator — Long',
+    body:  'Enter your total cross futures account balance and the amount you want to keep in reserve. The calculator shows how much you can safely deploy into positions (spendable) and how much must stay as a liquidation buffer (reserve), displayed in USD and as percentages of your total balance.'
+  },
+  'dist-short': {
+    title: 'Position Distribution Calculator — Short',
+    body:  'Enter your total cross futures account balance and the amount you want to keep in reserve. The calculator shows how much you can safely deploy into positions (spendable) and how much must stay as a liquidation buffer (reserve), displayed in USD and as percentages of your total balance.'
   }
 };
 
@@ -362,6 +370,45 @@ function onSlider(type) {
   } else {
     liqEl.style.display = 'none';
   }
+}
+
+/* ─── 7. Position distribution calculator ───────────────────────────────── */
+
+/**
+ * Splits account balance into spendable and reserve amounts.
+ * Requirements: 1.4, 1.5, 1.6, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 4.6
+ */
+function calcDist(type) {
+  const p       = type[0];
+  const balance = parseFloat($(p + '-dist-balance').value);
+  const reserve = parseFloat($(p + '-dist-reserve').value) || 0;
+
+  if (!isFinite(balance) || balance <= 0) {
+    alert('Please enter a valid account balance.');
+    return;
+  }
+  if (reserve < 0) {
+    alert('Reserve amount cannot be negative.');
+    return;
+  }
+  if (reserve >= balance) {
+    alert('Reserve amount must be less than the account balance.');
+    return;
+  }
+
+  const spendable    = balance - reserve;
+  const spendablePct = Math.round((spendable / balance) * 10000) / 100;
+  const reservePct   = Math.round((reserve / balance) * 10000) / 100;
+
+  $(p + '-dist-spendable').textContent   = fmt(spendable);
+  $(p + '-dist-spend-pct').textContent   = spendablePct + '%';
+  $(p + '-dist-reserve-out').textContent = fmt(reserve);
+  $(p + '-dist-res-pct').textContent     = reservePct + '%';
+
+  $(p + '-dist-spend-card').classList.add('metric--profit');
+  $(p + '-dist-reserve-card').classList.add('metric--neutral');
+
+  showResults(p + '-dist-results');
 }
 
 /* ─── Event binding ──────────────────────────────────────────────────────── */
