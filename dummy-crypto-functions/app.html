@@ -366,6 +366,111 @@
           </div>
         </div>
 
+        <!-- 7. Hedging Tool -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Hedging Tool</h2>
+            <span class="card-badge card-badge--long">Hedge simulator</span>
+            <button class="help-btn" onclick="openModal('hdg-long')">?</button>
+          </div>
+
+          <!-- Main position row -->
+          <div class="field-grid field-grid--3">
+            <div class="field">
+              <label>Entry price ($)</label>
+              <input type="number" id="l-hdg-entry" placeholder="e.g. 84000"
+                oninput="onHdgInput('long')">
+            </div>
+            <div class="field">
+              <label>Main leverage (x)</label>
+              <input type="number" id="l-hdg-main-lev" placeholder="e.g. 10" min="1" max="200" step="1"
+                oninput="onHdgInput('long')">
+            </div>
+            <div class="field">
+              <label>Main collateral ($)</label>
+              <input type="number" id="l-hdg-main-col" placeholder="e.g. 4000"
+                oninput="onHdgInput('long')">
+            </div>
+          </div>
+          <div class="field sim-actual-field">
+            <label>Main actual size</label>
+            <div class="readonly-field" id="l-hdg-main-actual">—</div>
+          </div>
+
+          <!-- Hedge position row -->
+          <div class="field-grid field-grid--3">
+            <div class="field">
+              <label>Hedge entry price ($)</label>
+              <input type="number" id="l-hdg-hedge-entry" placeholder="e.g. 84000"
+                oninput="onHdgInput('long')">
+            </div>
+            <div class="field">
+              <label>Hedge leverage (x)</label>
+              <input type="number" id="l-hdg-hedge-lev" placeholder="e.g. 10" min="1" max="200" step="1"
+                oninput="onHdgInput('long')">
+            </div>
+            <div class="field">
+              <label>Hedge collateral ($)</label>
+              <input type="number" id="l-hdg-hedge-col" placeholder="e.g. 2000"
+                oninput="onHdgInput('long')">
+            </div>
+          </div>
+          <div class="field sim-actual-field">
+            <label>Hedge actual size</label>
+            <div class="readonly-field" id="l-hdg-hedge-actual">—</div>
+          </div>
+
+          <!-- Range % row -->
+          <div class="field-grid field-grid--halves">
+            <div class="field">
+              <label>Slider range (%)</label>
+              <input type="number" id="l-hdg-range" placeholder="e.g. 20" value="20" min="1" max="100" step="1"
+                oninput="onHdgInput('long')">
+            </div>
+          </div>
+
+          <!-- Slider -->
+          <div class="slider-wrap">
+            <div class="slider-axis">
+              <span id="l-hdg-low" class="sim-axis-label sim-axis-label--left"></span>
+              <span id="l-hdg-high" class="sim-axis-label sim-axis-label--right"></span>
+            </div>
+            <div class="slider-track-outer">
+              <div class="slider-fill slider-fill--loss" id="l-hdg-fill-loss"></div>
+              <div class="slider-fill slider-fill--profit" id="l-hdg-fill-profit"></div>
+              <div class="slider-entry-tick" id="l-hdg-entry-tick"></div>
+              <div class="slider-liq-tick" id="l-hdg-liq-main"></div>
+              <div class="slider-liq-tick slider-liq-tick--hedge" id="l-hdg-liq-hedge"></div>
+            </div>
+            <input type="range" class="sim-range sim-range--long" id="l-hdg-slider"
+              min="0" max="1000" value="500" step="1"
+              oninput="onHdgSlider('long')">
+            <div class="sim-readout">
+              <div class="sim-price-row">
+                <span class="sim-price-label">Simulated price</span>
+                <span class="sim-price-val" id="l-hdg-price-out">—</span>
+              </div>
+              <div class="metric-row sim-metric-row">
+                <div class="metric">
+                  <div class="metric-label">Main PnL</div>
+                  <div class="metric-value" id="l-hdg-main-pnl">—</div>
+                  <div class="metric-sub" id="l-hdg-main-pct"></div>
+                </div>
+                <div class="metric">
+                  <div class="metric-label">Hedge PnL</div>
+                  <div class="metric-value" id="l-hdg-hedge-pnl">—</div>
+                  <div class="metric-sub" id="l-hdg-hedge-pct"></div>
+                </div>
+                <div class="metric">
+                  <div class="metric-label">Net PnL</div>
+                  <div class="metric-value" id="l-hdg-net-pnl">—</div>
+                  <div class="metric-sub" id="l-hdg-net-pct"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div><!-- /panel-long -->
 
       <!-- ═══════════════════ SHORT PANEL ══════════════════ -->
@@ -688,6 +793,111 @@
               <div class="metric" id="s-rr-verdict-card">
                 <div class="metric-label">Verdict</div>
                 <div class="metric-value" id="s-rr-verdict"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. Hedging Tool -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Hedging Tool</h2>
+            <span class="card-badge card-badge--short">Hedge simulator</span>
+            <button class="help-btn" onclick="openModal('hdg-short')">?</button>
+          </div>
+
+          <!-- Main position row -->
+          <div class="field-grid field-grid--3">
+            <div class="field">
+              <label>Entry price ($)</label>
+              <input type="number" id="s-hdg-entry" placeholder="e.g. 84000"
+                oninput="onHdgInput('short')">
+            </div>
+            <div class="field">
+              <label>Main leverage (x)</label>
+              <input type="number" id="s-hdg-main-lev" placeholder="e.g. 10" min="1" max="200" step="1"
+                oninput="onHdgInput('short')">
+            </div>
+            <div class="field">
+              <label>Main collateral ($)</label>
+              <input type="number" id="s-hdg-main-col" placeholder="e.g. 4000"
+                oninput="onHdgInput('short')">
+            </div>
+          </div>
+          <div class="field sim-actual-field">
+            <label>Main actual size</label>
+            <div class="readonly-field" id="s-hdg-main-actual">—</div>
+          </div>
+
+          <!-- Hedge position row -->
+          <div class="field-grid field-grid--3">
+            <div class="field">
+              <label>Hedge entry price ($)</label>
+              <input type="number" id="s-hdg-hedge-entry" placeholder="e.g. 84000"
+                oninput="onHdgInput('short')">
+            </div>
+            <div class="field">
+              <label>Hedge leverage (x)</label>
+              <input type="number" id="s-hdg-hedge-lev" placeholder="e.g. 10" min="1" max="200" step="1"
+                oninput="onHdgInput('short')">
+            </div>
+            <div class="field">
+              <label>Hedge collateral ($)</label>
+              <input type="number" id="s-hdg-hedge-col" placeholder="e.g. 2000"
+                oninput="onHdgInput('short')">
+            </div>
+          </div>
+          <div class="field sim-actual-field">
+            <label>Hedge actual size</label>
+            <div class="readonly-field" id="s-hdg-hedge-actual">—</div>
+          </div>
+
+          <!-- Range % row -->
+          <div class="field-grid field-grid--halves">
+            <div class="field">
+              <label>Slider range (%)</label>
+              <input type="number" id="s-hdg-range" placeholder="e.g. 20" value="20" min="1" max="100" step="1"
+                oninput="onHdgInput('short')">
+            </div>
+          </div>
+
+          <!-- Slider -->
+          <div class="slider-wrap">
+            <div class="slider-axis">
+              <span id="s-hdg-low" class="sim-axis-label sim-axis-label--left"></span>
+              <span id="s-hdg-high" class="sim-axis-label sim-axis-label--right"></span>
+            </div>
+            <div class="slider-track-outer">
+              <div class="slider-fill slider-fill--loss" id="s-hdg-fill-loss"></div>
+              <div class="slider-fill slider-fill--profit" id="s-hdg-fill-profit"></div>
+              <div class="slider-entry-tick" id="s-hdg-entry-tick"></div>
+              <div class="slider-liq-tick" id="s-hdg-liq-main"></div>
+              <div class="slider-liq-tick slider-liq-tick--hedge" id="s-hdg-liq-hedge"></div>
+            </div>
+            <input type="range" class="sim-range sim-range--short" id="s-hdg-slider"
+              min="0" max="1000" value="500" step="1"
+              oninput="onHdgSlider('short')">
+            <div class="sim-readout">
+              <div class="sim-price-row">
+                <span class="sim-price-label">Simulated price</span>
+                <span class="sim-price-val" id="s-hdg-price-out">—</span>
+              </div>
+              <div class="metric-row sim-metric-row">
+                <div class="metric">
+                  <div class="metric-label">Main PnL</div>
+                  <div class="metric-value" id="s-hdg-main-pnl">—</div>
+                  <div class="metric-sub" id="s-hdg-main-pct"></div>
+                </div>
+                <div class="metric">
+                  <div class="metric-label">Hedge PnL</div>
+                  <div class="metric-value" id="s-hdg-hedge-pnl">—</div>
+                  <div class="metric-sub" id="s-hdg-hedge-pct"></div>
+                </div>
+                <div class="metric">
+                  <div class="metric-label">Net PnL</div>
+                  <div class="metric-value" id="s-hdg-net-pnl">—</div>
+                  <div class="metric-sub" id="s-hdg-net-pct"></div>
+                </div>
               </div>
             </div>
           </div>

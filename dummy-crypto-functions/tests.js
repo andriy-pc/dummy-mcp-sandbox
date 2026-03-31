@@ -349,6 +349,21 @@ function rrVerdict(ratio) {
   return 'Excellent';
 }
 
+function hdgLegPnl(type, simPrice, entryPrice, collateral, leverage) {
+  const raw = (simPrice - entryPrice) / entryPrice * leverage * collateral;
+  return type === 'long' ? raw : -raw;
+}
+
+function hdgNetPnl(mainPnl, hedgePnl) {
+  return mainPnl + hedgePnl;
+}
+
+function hdgNetPnlPct(netPnl, mainCollateral, hedgeCollateral) {
+  const total = mainCollateral + hedgeCollateral;
+  if (total === 0) return 0;
+  return netPnl / total * 100;
+}
+
 suite('rrRisk');
 test('typical long: 5% stop distance',          () => assertClose(rrRisk(50000, 47500, 4000, 10), 2000));
 test('typical short: stop above entry',         () => assertClose(rrRisk(50000, 52500, 4000, 10), 2000));
@@ -383,6 +398,24 @@ test('ratio 1.5 → good',                        () => assert.equal(rrVerdict(1
 test('ratio 1.99 → good',                       () => assert.equal(rrVerdict(1.99), 'Good'));
 test('ratio 2.0 → excellent',                   () => assert.equal(rrVerdict(2.0),  'Excellent'));
 test('ratio 5.0 → excellent',                   () => assert.equal(rrVerdict(5.0),  'Excellent'));
+
+/* ─── Hedging Tool — hdgNetPnl / hdgNetPnlPct ───────────────────────────── */
+
+suite('hdgNetPnl');
+test('sum of two positive values',          () => assertClose(hdgNetPnl(500, 300), 800));
+test('sum of positive and negative',        () => assertClose(hdgNetPnl(500, -300), 200));
+test('zero when both zero',                 () => assertClose(hdgNetPnl(0, 0), 0));
+test('negative result when losses dominate',() => assertClose(hdgNetPnl(-200, -100), -300));
+test('sign: positive main + larger hedge loss → negative', () => assert.ok(hdgNetPnl(100, -500) < 0));
+
+suite('hdgNetPnlPct');
+test('typical: 200 net on 4000 total → 5%',    () => assertClose(hdgNetPnlPct(200, 2000, 2000), 5));
+test('zero collateral guard → 0',               () => assertClose(hdgNetPnlPct(999, 0, 0), 0));
+test('one collateral zero → uses the other',    () => assertClose(hdgNetPnlPct(100, 1000, 0), 10));
+test('negative net → negative pct',             () => assertClose(hdgNetPnlPct(-200, 2000, 2000), -5));
+test('formula: netPnl / (mainCol + hedgeCol) × 100', () => {
+  assertClose(hdgNetPnlPct(300, 1500, 1500), 300 / 3000 * 100);
+});
 
 /* ─── Summary ────────────────────────────────────────────────────────────── */
 

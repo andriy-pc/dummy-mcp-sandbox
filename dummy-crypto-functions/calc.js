@@ -78,6 +78,14 @@ const HELP_CONTENT = {
   'rr-short': {
     title: 'Risk/Reward Calculator — Short',
     body:  'Evaluates whether a short trade is worth opening. Enter your entry price, take-profit price, and stop-loss price to see the dollar risk, dollar reward, and the resulting ratio. A verdict label tells you at a glance whether the setup is poor, acceptable, good, or excellent.'
+  },
+  'hdg-long': {
+    title: 'Hedging Tool — Long',
+    body:  'Simulate a hedged position. Enter your main long position and an opposing short hedge, then drag the slider to see per-leg PnL, liquidation markers, and combined net PnL in real time. Use this to visualise how well your hedge offsets losses at different price levels.'
+  },
+  'hdg-short': {
+    title: 'Hedging Tool — Short',
+    body:  'Simulate a hedged position. Enter your main short position and an opposing long hedge, then drag the slider to see per-leg PnL, liquidation markers, and combined net PnL in real time. Use this to visualise how well your hedge offsets losses at different price levels.'
   }
 };
 
@@ -545,6 +553,220 @@ function calcRR(type) {
   $(p + '-rr-verdict').textContent = verdict;
 
   showResults(p + '-rr-results');
+}
+
+/* ─── Hedging Tool ───────────────────────────────────────────────────────── */
+
+/**
+ * Liquidation price for a hedging leg.
+ * @param {'long'|'short'} type
+ * @param {number} entry
+ * @param {number} leverage
+ * @returns {number}
+ */
+function hdgLiqPrice(type, entry, leverage) {
+  return type === 'long'
+    ? entry * (1 - 1 / leverage)
+    : entry * (1 + 1 / leverage);
+}
+
+/**
+ * PnL in USD for a single hedging leg at a simulated price.
+ * Long:  (simPrice − entryPrice) / entryPrice × leverage × collateral
+ * Short: negation of the above
+ * Requirements: 6.1, 6.2, 9.2
+ * @param {'long'|'short'} type
+ * @param {number} simPrice
+ * @param {number} entryPrice
+ * @param {number} collateral
+ * @param {number} leverage
+ * @returns {number}
+ */
+function hdgLegPnl(type, simPrice, entryPrice, collateral, leverage) {
+  const raw = (simPrice - entryPrice) / entryPrice * leverage * collateral;
+  return type === 'long' ? raw : -raw;
+}
+
+/**
+ * Combined net PnL across both hedging legs.
+ * Requirements: 8.1, 9.3
+ * @param {number} mainPnl
+ * @param {number} hedgePnl
+ * @returns {number}
+ */
+function hdgNetPnl(mainPnl, hedgePnl) {
+  return mainPnl + hedgePnl;
+}
+
+/**
+ * Net PnL as a percentage of total collateral deployed.
+ * Returns 0 when total collateral is zero (guard against division by zero).
+ * Requirements: 8.2, 9.4
+ * @param {number} netPnl
+ * @param {number} mainCollateral
+ * @param {number} hedgeCollateral
+ * @returns {number}
+ */
+function hdgNetPnlPct(netPnl, mainCollateral, hedgeCollateral) {
+  const total = mainCollateral + hedgeCollateral;
+  if (total === 0) return 0;
+  return netPnl / total * 100;
+}
+
+/**
+ * Called by oninput on all entry/leverage/collateral/range fields.
+ * Reads inputs, updates actual-size fields, configures the slider range,
+ * and refreshes the slider readout.
+ * Requirements: 2.8, 2.9, 2.10, 4.1, 4.2, 4.3, 4.4, 4.5
+ * @param {'long'|'short'} type
+ */
+function onHdgInput(type) {
+  const p = type[0]; // 'l' or 's'
+
+  // Read inputs
+  const entry      = parseFloat($(p + '-hdg-entry').value);
+  const mainLev    = parseFloat($(p + '-hdg-main-lev').value);
+  const mainCol    = parseFloat($(p + '-hdg-main-col').value);
+  const hedgeEntry = parseFloat($(p + '-hdg-hedge-entry').value);
+  const hedgeLev   = parseFloat($(p + '-hdg-hedge-lev').value);
+  const hedgeCol   = parseFloat($(p + '-hdg-hedge-col').value);
+  const rangePct   = parseFloat($(p + '-hdg-range').value) || 20;
+
+  // Update actual-size read-only fields
+  $(p + '-hdg-main-actual').textContent  =
+    (mainLev > 0 && mainCol > 0)   ? fmt(mainCol * mainLev)   : '—';
+  $(p + '-hdg-hedge-actual').textContent =
+    (hedgeLev > 0 && hedgeCol > 0) ? fmt(hedgeCol * hedgeLev) : '—';
+
+  if (entry > 0) {
+    // Configure slider range around entry
+    const min    = entry * (1 - rangePct / 100);
+    const max    = entry * (1 + rangePct / 100);
+    const slider = $(p + '-hdg-slider');
+    slider.min   = min;
+    slider.max   = max;
+    slider.value = entry;
+
+    // Axis labels
+    $(p + '-hdg-low').textContent  = fmt(min);
+    $(p + '-hdg-high').textContent = fmt(max);
+
+    // Entry tick always at 50%
+    $(p + '-hdg-entry-tick').style.left = '50%';
+
+    // Refresh slider readout
+    onHdgSlider(type);
+  } else {
+    // Reset all outputs to —
+    $(p + '-hdg-low').textContent       = '—';
+    $(p + '-hdg-high').textContent      = '—';
+    $(p + '-hdg-price-out').textContent = '—';
+    $(p + '-hdg-main-pnl').textContent  = '—';
+    $(p + '-hdg-main-pct').textContent  = '';
+    $(p + '-hdg-hedge-pnl').textContent = '—';
+    $(p + '-hdg-hedge-pct').textContent = '';
+    $(p + '-hdg-net-pnl').textContent   = '—';
+    $(p + '-hdg-net-pct').textContent   = '';
+    $(p + '-hdg-liq-main').style.display  = 'none';
+    $(p + '-hdg-liq-hedge').style.display = 'none';
+  }
+}
+
+/**
+ * Called by oninput on the range slider.
+ * Computes per-leg and net PnL, updates readouts, fill bars, and liq ticks.
+ * Requirements: 5.2, 5.3, 6.1, 6.2, 6.3, 6.4, 6.5, 7.1, 7.2, 7.3, 7.4, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6
+ * @param {'long'|'short'} type
+ */
+function onHdgSlider(type) {
+  const p        = type[0];
+  const slider   = $(p + '-hdg-slider');
+  const simPrice = parseFloat(slider.value);
+  const min      = parseFloat(slider.min);
+  const max      = parseFloat(slider.max);
+
+  const entry      = parseFloat($(p + '-hdg-entry').value);
+  const mainLev    = parseFloat($(p + '-hdg-main-lev').value)    || 10;
+  const mainCol    = parseFloat($(p + '-hdg-main-col').value)    || 0;
+  const hedgeEntry = parseFloat($(p + '-hdg-hedge-entry').value) || entry;
+  const hedgeLev   = parseFloat($(p + '-hdg-hedge-lev').value)   || 10;
+  const hedgeCol   = parseFloat($(p + '-hdg-hedge-col').value)   || 0;
+
+  if (!entry || entry <= 0 || isNaN(simPrice)) return;
+
+  // Direction: main = type, hedge = opposite
+  const mainDir  = type;
+  const hedgeDir = type === 'long' ? 'short' : 'long';
+
+  // PnL calculations
+  const mainPnl  = hdgLegPnl(mainDir,  simPrice, entry,      mainCol,  mainLev);
+  const hedgePnl = hdgLegPnl(hedgeDir, simPrice, hedgeEntry, hedgeCol, hedgeLev);
+  const netPnl   = hdgNetPnl(mainPnl, hedgePnl);
+  const netPct   = hdgNetPnlPct(netPnl, mainCol, hedgeCol);
+
+  // Per-leg percentages
+  const mainPct  = mainCol  > 0 ? (mainPnl  / mainCol)  * 100 : 0;
+  const hedgePct = hedgeCol > 0 ? (hedgePnl / hedgeCol) * 100 : 0;
+
+  // Helper: format with sign
+  const signed    = n => (n >= 0 ? '+' : '') + fmt(n);
+  const signedPct = n => (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+
+  // Write simulated price
+  $(p + '-hdg-price-out').textContent = fmt(simPrice);
+
+  // Main PnL
+  const mainPnlEl = $(p + '-hdg-main-pnl');
+  mainPnlEl.textContent = signed(mainPnl);
+  mainPnlEl.parentElement.classList.remove('metric--profit', 'metric--loss');
+  if (mainPnl > 0) mainPnlEl.parentElement.classList.add('metric--profit');
+  else if (mainPnl < 0) mainPnlEl.parentElement.classList.add('metric--loss');
+  $(p + '-hdg-main-pct').textContent = signedPct(mainPct);
+
+  // Hedge PnL
+  const hedgePnlEl = $(p + '-hdg-hedge-pnl');
+  hedgePnlEl.textContent = signed(hedgePnl);
+  hedgePnlEl.parentElement.classList.remove('metric--profit', 'metric--loss');
+  if (hedgePnl > 0) hedgePnlEl.parentElement.classList.add('metric--profit');
+  else if (hedgePnl < 0) hedgePnlEl.parentElement.classList.add('metric--loss');
+  $(p + '-hdg-hedge-pct').textContent = signedPct(hedgePct);
+
+  // Net PnL
+  const netPnlEl = $(p + '-hdg-net-pnl');
+  netPnlEl.textContent = signed(netPnl);
+  netPnlEl.parentElement.classList.remove('metric--profit', 'metric--loss');
+  if (netPnl > 0) netPnlEl.parentElement.classList.add('metric--profit');
+  else if (netPnl < 0) netPnlEl.parentElement.classList.add('metric--loss');
+  $(p + '-hdg-net-pct').textContent = signedPct(netPct);
+
+  // Fill bars (loss left, profit right for long; inverted for short)
+  const range    = max - min;
+  const thumbPct = range > 0 ? ((simPrice - min) / range) * 100 : 50;
+  if (type === 'long') {
+    $(p + '-hdg-fill-loss').style.width   = thumbPct < 50 ? (50 - thumbPct) + '%' : '0%';
+    $(p + '-hdg-fill-profit').style.width = thumbPct > 50 ? (thumbPct - 50) + '%' : '0%';
+  } else {
+    $(p + '-hdg-fill-loss').style.width   = thumbPct > 50 ? (thumbPct - 50) + '%' : '0%';
+    $(p + '-hdg-fill-profit').style.width = thumbPct < 50 ? (50 - thumbPct) + '%' : '0%';
+  }
+
+  // Liquidation ticks
+  const mainLiqPrice  = hdgLiqPrice(mainDir,  entry,      mainLev);
+  const hedgeLiqPrice = hdgLiqPrice(hedgeDir, hedgeEntry, hedgeLev);
+
+  const placeTick = (elId, liqPrice) => {
+    const el     = $(elId);
+    const liqPct = range > 0 ? ((liqPrice - min) / range) * 100 : -1;
+    if (liqPct >= 0 && liqPct <= 100) {
+      el.style.left    = liqPct + '%';
+      el.style.display = 'block';
+    } else {
+      el.style.display = 'none';
+    }
+  };
+
+  placeTick(p + '-hdg-liq-main',  mainLiqPrice);
+  placeTick(p + '-hdg-liq-hedge', hedgeLiqPrice);
 }
 
 /* ─── Event binding ──────────────────────────────────────────────────────── */

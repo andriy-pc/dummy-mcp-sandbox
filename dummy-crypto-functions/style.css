@@ -586,6 +586,11 @@ html, body {
   transform: translateX(-50%);
 }
 
+/* Hedge liquidation-price tick — orange, visually distinct from main liq tick (Req 7.5) */
+.slider-liq-tick--hedge {
+  background: var(--short);
+}
+
 /* Range input — sits on top of the track */
 .sim-range {
   -webkit-appearance: none;
