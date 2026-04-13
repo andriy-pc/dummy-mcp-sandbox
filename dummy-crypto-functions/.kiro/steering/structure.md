@@ -28,12 +28,14 @@ No subdirectories for source files. Everything lives at the root.
     <div class="card-header">
       <h2 class="card-title">…</h2>
       <span class="card-badge card-badge--{long|short}">…</span>
-      <button class="help-btn" onclick="openModal('{key}')">?</button>
+      <button class="help-btn" data-modal="{key}">?</button>
     </div>
     <!-- field-grid, inputs, button, results -->
   </div>
   ```
-- Event handlers are inline `oninput` / `onclick` attributes — no `addEventListener` in JS
+- Help buttons use `data-modal="{key}"` — **never** `onclick="openModal(...)"`. They are wired via a single `.help-btn` delegation in `bindEvents()`.
+- **No inline event handlers anywhere in `app.html`** — no `oninput`, `onclick`, or any other `on*` attributes. All event wiring lives in `bindEvents()` in `calc.js`.
+- When adding a new card with interactive inputs or buttons, give each element a unique `id` and add the corresponding `addEventListener` calls inside `bindEvents()`.
 - `<script src="calc.js">` is NOT a static tag in `app.html` — it is appended dynamically by `auth.js` after successful authentication
 
 ## Element ID Naming
@@ -56,6 +58,7 @@ Result/output elements follow `{panel}-{abbrev}-{output}`:
 - `fmtUnit(n)` formats a number as a plain decimal (6 decimal places) — use for asset unit amounts
 - `showResults(id)` adds `.visible` to a results container — call at the end of each `calc*` function
 - `updateActual(leverageId, posId, actualId)` — shared helper for live actual-position display
+- `bindEvents()` — wires all interactive elements via `addEventListener`; called once at the end of `calc.js`. Every new input or button must be registered here — never use inline `on*` attributes in HTML.
 - Functions are grouped by feature with a section comment banner:
   ```js
   /* ─── Section name ───────────────────────────────────────────────────────── */

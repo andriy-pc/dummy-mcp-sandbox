@@ -17,6 +17,7 @@ Solo traders who use leverage and need fast, reliable in-browser calculations du
 - **Movement % calculator** — shows how much price has moved from entry and whether the position is profitable
 - **Price range calculator** — derives upper/lower price targets from an entry price and a move percentage
 - **Live PnL simulator** — drag a slider across a ±20% range around entry to simulate PnL in real time, with a liquidation price marker on the track
+- **Hedging tool** — simulate a main position and an opposing hedge side-by-side; drag a slider to see main PnL, hedge PnL, and net PnL across a configurable price range, with liquidation markers for both legs
 - **Help modals** — each card has a "?" button that opens a description of the tool
 - **Actual position size** — every card shows a live read-only `position size × leverage` field
 

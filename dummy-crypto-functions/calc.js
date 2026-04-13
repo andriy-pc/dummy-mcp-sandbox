@@ -849,6 +849,38 @@ function bindEvents() {
     $(id).addEventListener('input', () => updateActual('s-pm-leverage', 's-pm-pos', 's-pm-actual'));
   });
   $('s-pm-btn').addEventListener('click', () => calcPriceMove('short'));
+
+  // Distribution calculate
+  $('l-dist-btn').addEventListener('click', () => calcDist('long'));
+  $('s-dist-btn').addEventListener('click', () => calcDist('short'));
+
+  // Risk/Reward actual + calculate — long
+  ['l-rr-entry', 'l-rr-leverage', 'l-rr-pos'].forEach(id => {
+    $(id).addEventListener('input', () => updateActual('l-rr-leverage', 'l-rr-pos', 'l-rr-actual'));
+  });
+  $('l-rr-btn').addEventListener('click', () => calcRR('long'));
+
+  // Risk/Reward actual + calculate — short
+  ['s-rr-entry', 's-rr-leverage', 's-rr-pos'].forEach(id => {
+    $(id).addEventListener('input', () => updateActual('s-rr-leverage', 's-rr-pos', 's-rr-actual'));
+  });
+  $('s-rr-btn').addEventListener('click', () => calcRR('short'));
+
+  // Hedging — long
+  ['l-hdg-entry', 'l-hdg-main-lev', 'l-hdg-main-col',
+   'l-hdg-hedge-entry', 'l-hdg-hedge-lev', 'l-hdg-hedge-col',
+   'l-hdg-range'].forEach(id => {
+    $(id).addEventListener('input', () => onHdgInput('long'));
+  });
+  $('l-hdg-slider').addEventListener('input', () => onHdgSlider('long'));
+
+  // Hedging — short
+  ['s-hdg-entry', 's-hdg-main-lev', 's-hdg-main-col',
+   's-hdg-hedge-entry', 's-hdg-hedge-lev', 's-hdg-hedge-col',
+   's-hdg-range'].forEach(id => {
+    $(id).addEventListener('input', () => onHdgInput('short'));
+  });
+  $('s-hdg-slider').addEventListener('input', () => onHdgSlider('short'));
 }
 
 // bindEvents() is called by auth.js via script.onload after dynamic injection.

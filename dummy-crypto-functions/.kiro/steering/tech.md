@@ -37,3 +37,10 @@ Follow [Google JavaScript Style Guide](https://google.github.io/styleguide/jsgui
 - All colours and radii defined as CSS custom properties in `:root`
 - BEM-lite class naming: block (`card`), element (`card-header`, `card-title`), modifier (`card-badge--long`)
 - No inline styles except for dynamic values set by JS (e.g. `element.style.left`, `element.style.width`)
+
+## Deployment & CSP
+
+The app is hosted on AWS S3 + CloudFront. The CloudFront `ResponseHeadersPolicy` enforces a strict Content Security Policy including `script-src 'self'`, which **blocks inline event handlers** (`oninput=`, `onclick=`, and any other `on*` HTML attributes).
+
+- Never add inline event handlers to HTML elements — they will be silently blocked in production
+- All event wiring must go through `addEventListener` calls inside `bindEvents()` in `calc.js`
